@@ -264,7 +264,8 @@ function untilTomorrow() {
 async function judge(text) {
   let r;
   try {
-    r = await fetch(CONFIG.api, { method: "POST", headers: { "Content-Type": "application/json" },
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 20000);
+    r = await fetch(CONFIG.api, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, history: S.history, day: today(), token: S.token }) });
   } catch (e) { throw { soft: "That didn't reach Frank. Check your connection and send it again." }; }
   if (r.status === 429) throw { soft: "Frank has had a lot of visitors today. Try again later." };
