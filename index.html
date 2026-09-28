@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Your landlord is raising the rent. You get 3 messages to get a yes.">
+<meta property="og:title" content="Talk Me Into It"><meta property="og:description" content="Your landlord is raising the rent. You get 3 messages to get a yes.">
+<meta name="twitter:card" content="summary">
+<title>Talk Me Into It</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2F47E8; --wall:#3953F2; --wall2:#2A40D6;
+  --ink:#141414; --paper:#FFFFFF; --soft:#F1F3FF;
+  --sun:#FFD233; --mint:#34D399; --hot:#FF5A5F;
+  --wood:#A0673B; --wood2:#7E4E2A;
+  --muted:#5A5F73;
+  --disp:"Bricolage Grotesque","Arial Black",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:480px;margin:0 auto;padding-inline:16px;padding-block:14px 28px;display:flex;flex-direction:column;gap:14px;min-height:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-family:var(--disp);font-weight:800;font-size:22px;letter-spacing:-.02em;color:#fff;line-height:1}
+.brand small{display:block;font-family:var(--body);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-top:5px}
+.pips{display:flex;gap:6px;align-items:center}
+.pip{width:34px;height:26px;border:2.5px solid var(--ink);border-radius:6px;background:#fff;position:relative;box-shadow:2px 2px 0 var(--ink);transition:transform .3s,background .3s}
+.pip::before,.pip::after{content:"";position:absolute;top:2px;width:15px;height:2.5px;background:var(--ink);border-radius:2px}
+.pip::before{left:2px;transform:rotate(28deg);transform-origin:left}
+.pip::after{right:2px;transform:rotate(-28deg);transform-origin:right}
+.pip.used{background:#7C8AF5;transform:translateY(2px);box-shadow:0 0 0 var(--ink)}
+.pip.used::before,.pip.used::after{opacity:.35}
+
+/* goal strip */
+.goal{background:var(--sun);border:2.5px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:10px 14px;font-weight:600;font-size:15px;line-height:1.35;display:flex;gap:10px;align-items:center}
+.goal b{font-family:var(--disp);font-weight:800}
+.goal .hint{font-size:13px;font-weight:600;opacity:.75;display:block}
+
+/* stage */
+.stage{position:relative;height:340px;border:2.5px solid var(--ink);border-radius:22px;box-shadow:5px 5px 0 var(--ink);overflow:hidden;
+  background:repeating-linear-gradient(90deg,var(--wall) 0 26px,var(--wall2) 26px 52px)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:46px;background:#1E2FA8;border-top:2.5px solid var(--ink)}
+.door{position:absolute;left:50%;bottom:44px;width:210px;height:280px;margin-left:-105px;background:#1A1A2E;border:10px solid var(--wood);border-bottom:0;border-radius:6px 6px 0 0;box-shadow:inset 0 0 0 2.5px var(--ink),0 0 0 2.5px var(--ink)}
+.door::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#FFE9A8 0%,#F7C969 100%);opacity:.9}
+.plaque{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#E9C46A;border:2.5px solid var(--ink);border-radius:6px;font-family:var(--disp);font-weight:800;font-size:14px;padding:1px 8px;z-index:3}
+.notice{position:absolute;right:10px;top:150px;width:92px;background:#fff;border:2px solid var(--ink);padding:8px 7px 9px;transform:rotate(5deg);z-index:4;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.notice::before{content:"";position:absolute;top:-9px;left:50%;width:34px;height:14px;margin-left:-17px;background:rgba(255,236,160,.9);border:1px solid rgba(0,0,0,.2);transform:rotate(-6deg)}
+.notice .h{font-family:var(--disp);font-weight:800;font-size:10px;letter-spacing:.06em;color:var(--hot)}
+.notice .old{font-size:12px;text-decoration:line-through;color:var(--muted);font-weight:600;margin-top:3px}
+.notice .new{font-family:var(--disp);font-weight:800;font-size:19px;line-height:1}
+.notice .d{font-size:9px;color:var(--muted);margin-top:3px;font-weight:600}
+#frank{position:absolute;left:50%;bottom:0;width:250px;margin-left:-125px;z-index:2;transform-origin:50% 100%}
+#frank.breathe{animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:scaleY(1.012)}}
+#frank.bounce{animation:bounce .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bounce{30%{transform:translateY(-12px) scaleY(1.03)}}
+#frank.shake{animation:shake .5s}
+@keyframes shake{20%{transform:translateX(-8px) rotate(-2deg)}40%{transform:translateX(8px) rotate(2deg)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+.part{transition:transform .28s cubic-bezier(.3,1.5,.5,1),d .25s ease;transform-box:fill-box;transform-origin:center}
+#blush{transition:opacity .3s}
+#steam circle{opacity:0}
+.annoyed #steam circle{animation:steam 1.2s ease-out infinite}
+.annoyed #steam circle:nth-child(2){animation-delay:.3s}
+.annoyed #steam circle:nth-child(3){animation-delay:.6s}
+@keyframes steam{0%{opacity:.9;transform:translateY(0) scale(.6)}100%{opacity:0;transform:translateY(-28px) scale(1.4)}}
+#sweat{opacity:0;transition:opacity .3s}
+.defeated #sweat{opacity:1;animation:drip 1.4s ease-in infinite}
+@keyframes drip{0%{transform:translateY(0)}100%{transform:translateY(14px);opacity:0}}
+
+/* speech */
+.bubble{position:absolute;left:12px;right:12px;top:12px;z-index:6;background:#fff;border:2.5px solid var(--ink);border-radius:18px;padding:11px 14px;box-shadow:3px 3px 0 var(--ink);
+  font-family:var(--disp);font-weight:600;font-size:19px;line-height:1.25;letter-spacing:-.01em;min-height:52px;transform-origin:50% 100%}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-13px;width:20px;height:20px;background:#fff;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:rotate(45deg);margin-left:6px}
+.bubble .who{display:block;font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.bubble.pop{animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.85);opacity:.4}100%{transform:scale(1)}}
+.dots span{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ink);margin-right:5px;animation:dot 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+
+/* meter */
+.meter{background:#fff;border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);padding:12px 14px 14px;position:relative}
+.mrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.mlabel{font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mstate{font-family:var(--disp);font-weight:800;font-size:20px;letter-spacing:-.02em}
+.bar{height:30px;border:2.5px solid var(--ink);border-radius:999px;background:var(--soft);position:relative;overflow:hidden}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:repeating-linear-gradient(-45deg,var(--sun) 0 12px,#FFC400 12px 24px);border-right:2.5px solid var(--ink);transition:width .9s cubic-bezier(.3,1.35,.5,1)}
+.fill.full{border-right:0;background:repeating-linear-gradient(-45deg,var(--mint) 0 12px,#22C386 12px 24px)}
+.ticks{position:absolute;inset:0;display:flex;pointer-events:none}
+.ticks i{flex:1;border-right:2px dashed rgba(20,20,20,.18)}.ticks i:last-child{border:0}
+.pct{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--disp);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.ends{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-top:6px}
+.float{position:absolute;right:14px;top:-8px;z-index:8;font-weight:700;font-size:14px;padding:6px 11px;border:2.5px solid var(--ink);border-radius:999px;box-shadow:2px 2px 0 var(--ink);white-space:nowrap;animation:rise 2.2s cubic-bezier(.2,.9,.3,1) forwards}
+.float.pos{background:var(--mint)}.float.neg{background:var(--hot);color:#fff}.float.zero{background:#fff}
+.float b{font-family:var(--disp);font-weight:800;margin-right:4px}
+@keyframes rise{0%{transform:translateY(20px) scale(.6);opacity:0}15%{transform:translateY(-6px) scale(1.08);opacity:1}25%{transform:translateY(0) scale(1)}80%{opacity:1}100%{transform:translateY(-34px);opacity:0}}
+
+/* your message */
+.mine{align-self:flex-end;max-width:88%;background:var(--ink);color:#fff;border-radius:18px 18px 6px 18px;padding:11px 14px;font-size:16px;line-height:1.4;font-weight:500;animation:pop .3s cubic-bezier(.3,1.6,.5,1)}
+.mine[hidden]{display:none}
+
+/* composer */
+.compose{background:#fff;border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);padding:10px;display:flex;flex-direction:column;gap:8px}
+textarea{width:100%;border:0;resize:none;font:500 17px/1.4 var(--body);color:var(--ink);background:transparent;padding:4px 4px;min-height:52px;outline:none}
+textarea::placeholder{color:#8A8FA3}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.count{font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.btn{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:-.01em;padding:11px 22px;border:2.5px solid var(--ink);border-radius:14px;background:var(--sun);box-shadow:0 5px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn[disabled]{opacity:.55;cursor:default;transform:none}
+.btn.alt{background:#fff}
+.note{font-size:13px;font-weight:600;color:rgba(255,255,255,.8);text-align:center;min-height:18px}
+
+/* end sheet */
+.veil{position:fixed;inset:0;background:rgba(10,14,40,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{width:100%;max-width:480px;background:#fff;border:2.5px solid var(--ink);border-radius:24px;box-shadow:6px 6px 0 var(--ink);padding:22px 18px 18px;position:relative;animation:up .5s cubic-bezier(.2,1.2,.4,1);max-height:calc(100% - 20px);overflow:auto}
+@keyframes up{from{transform:translateY(60px);opacity:0}}
+.stamp{display:inline-block;font-family:var(--disp);font-weight:800;font-size:30px;letter-spacing:.02em;border:4px solid currentColor;border-radius:10px;padding:4px 14px;transform:rotate(-7deg);animation:slam .45s cubic-bezier(.2,1.4,.4,1) .15s both}
+.stamp.win{color:#10A36B}.stamp.lose{color:var(--hot)}
+@keyframes slam{0%{transform:rotate(-7deg) scale(3);opacity:0}100%{transform:rotate(-7deg) scale(1);opacity:1}}
+.sheet h2{font-family:var(--disp);font-weight:800;font-size:28px;line-height:1.05;letter-spacing:-.03em;margin-top:14px;text-wrap:balance}
+.quote{margin-top:14px;background:var(--soft);border:2.5px solid var(--ink);border-radius:14px;padding:12px 14px;font-size:17px;line-height:1.4;font-weight:600}
+.quote small{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.found{margin-top:14px}
+.found p{font-weight:700;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:13px;font-weight:700;padding:5px 10px;border:2px solid var(--ink);border-radius:999px;background:var(--mint)}
+.chip.hid{background:#fff;color:var(--muted);border-style:dashed}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.actions .wide{grid-column:1/-1;text-align:center;text-decoration:none;color:var(--ink);display:block}
+.rh{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:-.01em;margin-top:20px}
+.turns{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:0}
+.turns li{border:2px solid var(--ink);border-radius:12px;padding:9px 11px;font-size:14px;line-height:1.35;font-weight:500}
+.turns .tc{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tc span{font-size:12px;font-weight:700;padding:2px 8px;border:1.5px solid var(--ink);border-radius:999px}
+.tc .g{background:var(--mint)}.tc .l{background:var(--hot);color:#fff}.tc .z{background:#fff}
+.wstat{font-size:14px;font-weight:600;color:var(--muted);margin-top:2px}
+.wall{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:0}
+.wall li{background:var(--soft);border:2px solid var(--ink);border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.4;font-weight:600}
+.wall li.me{background:var(--sun)}
+.wall li small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.next{margin-top:16px;text-align:center;font-weight:700;font-size:15px}
+.next b{font-family:var(--disp);font-weight:800;font-variant-numeric:tabular-nums}
+.x{position:absolute;right:12px;top:12px;width:38px;height:38px;border:2.5px solid var(--ink);border-radius:50%;background:#fff;font-weight:800;font-size:18px;line-height:1}
+.donebar{background:#fff;border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700}
+.donebar b{font-family:var(--disp);font-weight:800;font-variant-numeric:tabular-nums}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (min-width:700px){.stage{height:380px}.wrap{padding-block:24px 36px}}
+</style>
+
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Talk Me Into It<small>Day 1 · The Landlord</small></div>
+    <div class="pips" aria-label="Messages left"><span class="pip" id="p0"></span><span class="pip" id="p1"></span><span class="pip" id="p2"></span></div>
+  </header>
+
+  <div class="goal"><div>Keep your rent at <b>$1,450</b>. You have 3 messages to get a yes.<span class="hint">Frank has weak spots. Find them.</span></div></div>
+
+  <section class="stage" id="stage" aria-label="Frank at his door">
+    <div class="bubble" id="bubble" aria-live="polite"><span class="who">Frank · your landlord</span><span id="say"></span></div>
+    <div class="door"><span class="plaque">4B</span></div>
+    <div class="notice" aria-hidden="true"><div class="h">RENT NOTICE</div><div class="old">$1,450</div><div class="new">$1,670</div><div class="d">from the 1st</div></div>
+    <svg id="frank" class="breathe" viewBox="0 0 260 250" aria-hidden="true">
+      <g id="steam" fill="#fff" stroke="#141414" stroke-width="2"><circle cx="78" cy="48" r="9"/><circle cx="182" cy="44" r="8"/><circle cx="130" cy="30" r="7"/></g>
+      <!-- body -->
+      <path d="M32 252 C36 196 74 172 130 172 C186 172 224 196 228 252 Z" fill="#D9A53A" stroke="#141414" stroke-width="3.5"/>
+      <path d="M104 174 L130 222 L156 174 Z" fill="#fff" stroke="#141414" stroke-width="3"/>
+      <path d="M130 222 L130 252" stroke="#141414" stroke-width="3"/>
+      <circle cx="120" cy="232" r="3.5" fill="#141414"/><circle cx="120" cy="246" r="3.5" fill="#141414"/>
+      <rect x="112" y="150" width="36" height="30" fill="#C98B67" stroke="#141414" stroke-width="3"/>
+      <!-- head -->
+      <ellipse cx="69" cy="112" rx="11" ry="15" fill="#D99A76" stroke="#141414" stroke-width="3"/>
+      <ellipse cx="191" cy="112" rx="11" ry="15" fill="#D99A76" stroke="#141414" stroke-width="3"/>
+      <ellipse cx="130" cy="104" rx="60" ry="66" fill="#E3A983" stroke="#141414" stroke-width="3.5"/>
+      <path d="M72 96 C70 72 80 60 92 56 C86 70 86 84 88 98 Z" fill="#B9BDC7" stroke="#141414" stroke-width="3"/>
+      <path d="M188 96 C190 72 180 60 168 56 C174 70 174 84 172 98 Z" fill="#B9BDC7" stroke="#141414" stroke-width="3"/>
+      <ellipse cx="112" cy="54" rx="14" ry="7" fill="#fff" opacity=".45" transform="rotate(-18 112 54)"/>
+      <g id="blush" opacity="0"><ellipse cx="94" cy="128" rx="11" ry="7" fill="#FF6B6B" opacity=".7"/><ellipse cx="166" cy="128" rx="11" ry="7" fill="#FF6B6B" opacity=".7"/></g>
+      <!-- eyes -->
+      <g id="eyes">
+        <circle id="eyeL" class="part" cx="108" cy="104" r="6" fill="#141414"/>
+        <circle id="eyeR" class="part" cx="152" cy="104" r="6" fill="#141414"/>
+        <path id="lidL" class="part" d="M96 92 H120 V92 H96 Z" fill="#E3A983"/>
+        <path id="lidR" class="part" d="M140 92 H164 V92 H140 Z" fill="#E3A983"/>
+        <path id="laughL" d="M99 106 Q108 96 117 106" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" opacity="0"/>
+        <path id="laughR" d="M143 106 Q152 96 161 106" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round" opacity="0"/>
+      </g>
+      <!-- glasses -->
+      <g fill="none" stroke="#141414" stroke-width="3.5"><rect x="91" y="90" width="34" height="28" rx="9"/><rect x="135" y="90" width="34" height="28" rx="9"/><path d="M125 101 Q130 97 135 101"/><path d="M91 100 L74 97"/><path d="M169 100 L186 97"/></g>
+      <!-- brows -->
+      <rect id="browL" class="part" x="92" y="76" width="32" height="8" rx="4" fill="#8E929C" stroke="#141414" stroke-width="2.5"/>
+      <rect id="browR" class="part" x="136" y="76" width="32" height="8" rx="4" fill="#8E929C" stroke="#141414" stroke-width="2.5"/>
+      <!-- nose -->
+      <path d="M130 108 C124 122 120 130 128 133 C134 135 140 131 136 127" fill="#D99A76" stroke="#141414" stroke-width="3" stroke-linecap="round"/>
+      <!-- mouth -->
+      <path id="mouth" class="part" d="M114 154 Q130 156 146 154" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round"/>
+      <!-- moustache -->
+      <path d="M100 146 C108 134 122 136 130 142 C138 136 152 134 160 146 C150 150 140 148 130 146 C120 148 110 150 100 146 Z" fill="#9CA0AA" stroke="#141414" stroke-width="3" stroke-linejoin="round"/>
+      <path id="sweat" d="M186 70 C182 78 180 82 184 85 C188 87 191 83 189 78 Z" fill="#8FD3FF" stroke="#141414" stroke-width="2"/>
+      <!-- mug -->
+      <g id="mug">
+        <path d="M188 190 C204 186 214 196 212 210" fill="none" stroke="#141414" stroke-width="3"/>
+        <rect x="160" y="182" width="38" height="44" rx="5" fill="#fff" stroke="#141414" stroke-width="3"/>
+        <path d="M198 194 C210 194 210 212 198 212" fill="none" stroke="#141414" stroke-width="3.5"/>
+        <text x="179" y="199" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="9" fill="#141414">#1</text>
+        <text x="179" y="209" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="5.2" textLength="32" lengthAdjust="spacingAndGlyphs" fill="#141414">LANDLORD</text>
+        <ellipse cx="161" cy="220" rx="9" ry="7" fill="#E3A983" stroke="#141414" stroke-width="3"/>
+      </g>
+    </svg>
+    <div class="floor"></div>
+  </section>
+
+  <div class="meter" id="meter">
+    <div class="mrow"><span class="mlabel">Deal meter</span><span class="mstate" id="mstate">No chance</span></div>
+    <div class="bar"><div class="fill" id="fill"></div><div class="ticks"><i></i><i></i><i></i><i></i></div><span class="pct" id="pct">0%</span></div>
+    <div class="ends"><span>$1,670</span><span>$1,450</span></div>
+  </div>
+
+  <div class="mine" id="mine" hidden></div>
+
+  <form class="compose" id="form">
+    <label for="msg" style="position:absolute;left:-9999px">Your message to Frank</label>
+    <textarea id="msg" maxlength="200" rows="2" placeholder="Make your case to Frank..."></textarea>
+    <div class="crow"><span class="count" id="count">0 / 200</span><button class="btn" id="send" type="submit">Send</button></div>
+  </form>
+  <p class="note" id="note"></p>
+</div>
+<canvas id="confetti" hidden></canvas>
+<div class="veil" id="veil" hidden><div class="sheet" id="sheet"></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const OLD = 1450, NEW = 1670;
+
+/* ---------------- settings ---------------- */
+const CONFIG = {
+  api: "https://three-messages.israelfemiojo9.workers.dev/",               // the Cloudflare Worker address, e.g. https://talk-me-into-it.yourname.workers.dev
+  site: "israelfemiojo.github.io/talk-me-into-it",  // shown in the share post
+  goatcounter: "whichaisaidthat",                  // your GoatCounter code, counts plays, wins, retries and shares
+};
+const S = { meter: 0, used: 0, found: [], labels: {}, total: 8, history: [], turns: [], token: null, best: null, done: false, busy: false, win: false };
+
+/* one game per person per day, saved in the browser so a refresh doesn't restart it */
+function today() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+const KEY = "tm-day-" + today();
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ meter: S.meter, used: S.used, found: S.found, labels: S.labels, total: S.total, history: S.history, best: S.best, done: S.done, win: S.win, turns: S.turns, token: S.token })); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
+function untilTomorrow() {
+  const now = new Date(), t = new Date(now); t.setHours(24, 0, 0, 0);
+  const m = Math.max(0, Math.round((t - now) / 60000));
+  return Math.floor(m / 60) + "h " + (m % 60) + "m";
+}
+
+/* the rules live on the server so nobody can read the weak spots in the page source */
+async function judge(text) {
+  let r;
+  try {
+    r = await fetch(CONFIG.api, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, history: S.history, day: today(), token: S.token }) });
+  } catch (e) { throw { soft: "That didn't reach Frank. Check your connection and send it again." }; }
+  if (r.status === 429) throw { soft: "Frank has had a lot of visitors today. Try again later." };
+  if (r.status === 409) throw { soft: "You've already played today. Come back tomorrow." };
+  if (!r.ok) throw { soft: "That didn't reach Frank. Send it again." };
+  const res = await r.json();
+  if (res.total) S.total = res.total;
+  return res;
+}
+
+/* play counting */
+(function () {
+  if (!CONFIG.goatcounter || /^(localhost|127\.)/.test(location.hostname) || location.protocol === "file:") return;
+  const sc = document.createElement("script"); sc.async = true; sc.src = "https://gc.zgo.at/count.js";
+  sc.setAttribute("data-goatcounter", "https://" + CONFIG.goatcounter + ".goatcounter.com/count");
+  sc.setAttribute("data-goatcounter-settings", '{"path":"talk-me-into-it"}');
+  document.head.appendChild(sc);
+})();
+function track(name) {
+  const send = () => window.goatcounter && window.goatcounter.count && window.goatcounter.count({ path: "tm-" + name, title: name, event: true });
+  if (window.goatcounter && window.goatcounter.count) send(); else setTimeout(send, 1500);
+}
+
+/* ---------------- Frank's face ---------------- */
+const MOUTH = {
+  flat: "M114 154 Q130 156 146 154", frown: "M114 158 Q130 147 146 158", small: "M120 153 Q130 158 140 153",
+  smirk: "M114 154 Q134 160 148 148", laugh: "M110 150 Q130 176 150 150 Q130 156 110 150 Z", sigh: "M122 151 Q130 164 138 151 Q130 154 122 151 Z",
+};
+function face(kind) {
+  const f = $("frank");
+  f.classList.toggle("annoyed", kind === "annoyed");
+  f.classList.toggle("defeated", kind === "defeated");
+  const set = (bl, br, byl, byr, lid, mouth, fillMouth, blush, laugh) => {
+    $("browL").style.transform = `translateY(${byl}px) rotate(${bl}deg)`;
+    $("browR").style.transform = `translateY(${byr}px) rotate(${br}deg)`;
+    $("lidL").setAttribute("d", `M96 92 H120 V${92 + lid} H96 Z`);
+    $("lidR").setAttribute("d", `M140 92 H164 V${92 + lid} H140 Z`);
+    $("mouth").setAttribute("d", MOUTH[mouth]);
+    $("mouth").setAttribute("fill", fillMouth ? "#7A1F2B" : "none");
+    $("blush").style.opacity = blush;
+    ["eyeL", "eyeR"].forEach(e => $(e).style.opacity = laugh ? 0 : 1);
+    ["laughL", "laughR"].forEach(e => $(e).setAttribute("opacity", laugh ? 1 : 0));
+  };
+  switch (kind) {
+    case "stern":    set(12, -12, 2, 2, 7, "flat", 0, 0, 0); break;
+    case "annoyed":  set(22, -22, 5, 5, 8, "frown", 0, 1, 0); break;
+    case "listening":set(4, -4, 0, 0, 4, "small", 0, 0, 0); break;
+    case "tempted":  set(6, -14, 0, -7, 3, "smirk", 0, 0, 0); break;
+    case "thinking": set(0, -10, -2, -6, 0, "small", 0, 0, 0); break;
+    case "laugh":    set(-4, 4, -6, -6, 0, "laugh", 1, .6, 1); break;
+    case "defeated": set(-16, 16, -2, -2, 5, "sigh", 1, .35, 0); break;
+  }
+}
+function moodFor(m) { return m >= 100 ? "defeated" : m >= 60 ? "tempted" : m >= 25 ? "listening" : "stern"; }
+function stateLabel(m) { return m >= 100 ? "Deal." : m >= 80 ? "Almost" : m >= 55 ? "Tempted" : m >= 25 ? "Listening" : m > 0 ? "Not buying it" : "No chance"; }
+function react(cls) { const f = $("frank"); f.classList.remove("breathe", "bounce", "shake"); void f.offsetWidth; f.classList.add(cls); setTimeout(() => { f.classList.remove(cls); f.classList.add("breathe"); }, 650); }
+
+// blink now and then
+setInterval(() => {
+  if (document.hidden) return;
+  ["lidL", "lidR"].forEach(id => { const el = $(id); const d = el.getAttribute("d"); el.dataset.d = d; el.setAttribute("d", d.replace(/V\d+(\.\d+)?/, "V116")); setTimeout(() => el.setAttribute("d", el.dataset.d), 130); });
+}, 3800);
+
+/* ---------------- speech ---------------- */
+let typer = null;
+function say(text) {
+  clearInterval(typer);
+  const b = $("bubble"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+  const el = $("say"); el.textContent = ""; let i = 0;
+  return new Promise(res => {
+    typer = setInterval(() => { i += 2; el.textContent = text.slice(0, i); if (i >= text.length) { clearInterval(typer); res(); } }, 24);
+  });
+}
+function thinking() { clearInterval(typer); $("say").innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
+
+/* ---------------- meter ---------------- */
+function setMeter(m) {
+  S.meter = Math.max(0, Math.min(100, m));
+  $("fill").style.width = S.meter + "%";
+  $("fill").classList.toggle("full", S.meter >= 100);
+  $("pct").textContent = S.meter + "%";
+  $("mstate").textContent = stateLabel(S.meter);
+}
+function floatChip(text, kind, delay) {
+  setTimeout(() => {
+    const c = document.createElement("div"); c.className = "float " + kind; c.innerHTML = text;
+    c.style.top = (-8 - $("meter").querySelectorAll(".float").length * 42) + "px";
+    $("meter").appendChild(c); setTimeout(() => c.remove(), 2300);
+  }, delay);
+}
+function pips() { for (let i = 0; i < 3; i++) $("p" + i).classList.toggle("used", i < S.used); }
+
+/* ---------------- a turn ---------------- */
+$("msg").addEventListener("input", () => { $("count").textContent = $("msg").value.length + " / 200"; });
+$("msg").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); } });
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = $("msg").value.trim();
+  if (!text || S.busy || S.done) return;
+  S.busy = true; $("send").disabled = true; $("note").textContent = "";
+  $("mine").hidden = false; $("mine").textContent = text;
+  thinking(); face("thinking");
+  let res;
+  try { res = await judge(text); }
+  catch (err) { $("note").textContent = err.soft || "Send it again."; face(moodFor(S.meter)); await say(S.history.length ? S.history[S.history.length - 1].text : OPEN); S.busy = false; $("send").disabled = false; return; }
+  $("msg").value = ""; $("count").textContent = "0 / 200";
+  const r = res;
+  S.token = r.token; S.used = r.used; pips();
+  S.turns.push({ text, gains: r.gains.map(g => ({ label: g.label, v: g.v })), losses: r.losses.map(l => ({ label: l.label, v: l.v })), wasted: !!r.wasted });
+  if (S.used === 1) track("first-message");
+  S.history.push({ role: "you", text });
+  r.gains.forEach(g => { S.found.push(g.id); S.labels[g.id] = g.label; });
+  setMeter(r.meter);
+  if (r.gains.length && (!S.best || r.delta > S.best.delta)) S.best = { text, delta: r.delta };
+
+  // feedback chips
+  let d = 150;
+  if (r.wasted) floatChip("<b>0</b> Nice try. Wasted turn", "zero", d);
+  r.gains.forEach(g => { floatChip(`<b>+${g.v}</b> ${g.label}${g.specific ? "" : " (be specific)"}`, "pos", d); d += 650; });
+  r.losses.forEach(l => { floatChip(`<b>${l.v}</b> ${l.label}`, "neg", d); d += 650; });
+  if (!r.wasted && !r.gains.length && !r.losses.length) floatChip("<b>+0</b> He didn't budge", "zero", d);
+
+  // Frank reacts
+  const won = !!r.won;
+  const laughHit = r.gains.some(g => g.id === "humour");
+  if (r.losses.length || r.wasted) { face("annoyed"); react("shake"); }
+  else if (laughHit) { face("laugh"); react("bounce"); }
+  else if (r.gains.length) { face(moodFor(S.meter)); react("bounce"); }
+  else face(moodFor(S.meter));
+  let reply = String(res.reply || "Hm.").slice(0, 220);
+  if (won) reply = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
+  S.history.push({ role: "frank", text: reply });
+  await say(reply);
+  if (!won && (r.losses.length || laughHit)) setTimeout(() => face(moodFor(S.meter)), 1400);
+
+  if (won) { S.done = true; S.win = true; S.best = { text, delta: r.delta }; save(); face("defeated"); setTimeout(() => end(true), 1100); }
+  else if (r.finished || S.used >= 3) { S.done = true; S.win = false; save(); setTimeout(async () => { face("stern"); await say("Rent's $1,670 on the first. Nice try, though."); setTimeout(() => end(false), 900); }, 1300); }
+  if (!S.done) save();
+  S.busy = false; $("send").disabled = S.done;
+  if (!S.done) $("msg").focus();
+});
+
+const OPEN = "Rent goes up to $1,670 on the first. Costs went up. Nothing personal.";
+const WIN_LINES = ["Fine. $1,450 it stays. Don't tell the other tenants.", "Alright, alright. $1,450. You drive a hard bargain.", "Ugh. Fine. Rent stays at $1,450. Now get off my porch."];
+
+/* ---------------- end ---------------- */
+function end(win, restored) {
+  const n = S.used;
+  const line = S.best ? S.best.text : null;
+  const hidden = Math.max(0, S.total - S.found.length);
+  if (!restored) track(win ? "won" : "lost");
+  const shareText = win
+    ? `Talk Me Into It, Day 1\nI talked my landlord out of a $220 rent hike in ${n} message${n > 1 ? "s" : ""}.\n\nMy winning line: "${(line || "").slice(0, 140)}"\n\nBeat him: ${CONFIG.site}`
+    : `Talk Me Into It, Day 1\nMy landlord won. I got him to ${S.meter}% and he still raised the rent.\n\nTry him: ${CONFIG.site}`;
+  $("sheet").innerHTML = `
+    <button class="x" id="closeSheet" type="button" aria-label="Close">×</button>
+    <span class="stamp ${win ? "win" : "lose"}">${win ? "RENT FROZEN" : "RENT GOES UP"}</span>
+    <h2>${win ? `You talked Frank down in ${n} message${n > 1 ? "s" : ""}.` : `Frank won this round. You got him to ${S.meter}%.`}</h2>
+    ${line ? `<div class="quote"><small>${win ? "The line that worked" : "Your best line"}</small>${esc(line)}</div>` : ""}
+    <div class="found"><p>You found ${S.found.length} of ${S.total} weak spots.</p>
+      <div class="chips">${S.found.map(id => `<span class="chip">${esc(S.labels[id] || "")}</span>`).join("")}${Array.from({ length: hidden }, () => '<span class="chip hid">Hidden</span>').join("")}</div></div>
+    ${reviewHTML()}
+    <p class="rh">How people beat Frank today</p>
+    <p class="wstat" id="wstat">Loading...</p>
+    <ol class="wall" id="wall"></ol>
+    <div class="actions">
+      <a class="btn wide" href="https://x.com/intent/post?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener" id="postx">Post on X</a>
+      <button class="btn alt wide" id="copy" type="button">Copy result</button>
+    </div>
+    <p class="next">New round in <b id="cd">${untilTomorrow()}</b></p>`;
+  $("veil").hidden = false;
+  $("copy").onclick = async () => { try { await navigator.clipboard.writeText(shareText); $("copy").textContent = "Copied"; track("copy"); } catch (e) { $("copy").textContent = "Copy failed"; } };
+  $("closeSheet").onclick = () => { $("veil").hidden = true; };
+  doneBar(win);
+  loadWall(win ? line : null);
+  $("postx").onclick = () => track("post-x");
+  if (win && !restored) confetti();
+}
+function reviewHTML() {
+  if (!S.turns || !S.turns.length) return "";
+  const chips = t => t.wasted ? '<span class="z">0 Wasted turn</span>'
+    : (t.gains.map(g => `<span class="g">+${g.v} ${esc(g.label)}</span>`).join("") + t.losses.map(l => `<span class="l">${l.v} ${esc(l.label)}</span>`).join("")) || '<span class="z">+0 He didn\'t budge</span>';
+  return `<p class="rh">Your messages</p><ol class="turns">${S.turns.map(t => `<li>${esc(t.text)}<div class="tc">${chips(t)}</div></li>`).join("")}</ol>`;
+}
+async function loadWall(mine) {
+  try {
+    const r = await fetch(new URL("lines?day=" + encodeURIComponent(today()), CONFIG.api.replace(/\/?$/, "/")));
+    const d = await r.json();
+    if (!$("wall")) return;
+    $("wstat").textContent = d.played ? `${d.won} of ${d.played} players beat him today.` : "You're one of the first to play today.";
+    $("wall").innerHTML = d.wins.length ? d.wins.map(w => `<li class="${mine && w.line === mine ? "me" : ""}">${esc(w.line)}<small>${mine && w.line === mine ? "You · " : ""}won in ${w.n} message${w.n > 1 ? "s" : ""}</small></li>`).join("")
+      : "<li>Nobody has beaten him yet today.</li>";
+  } catch (e) { if ($("wstat")) $("wstat").textContent = "Couldn't load today's lines right now."; }
+}
+function doneBar(win) {
+  const f = $("form"); if (!f) return;
+  const bar = document.createElement("div"); bar.className = "donebar";
+  bar.innerHTML = `<span>${win ? "You beat Frank today." : "Frank won today."} New round in <b class="cd2">${untilTomorrow()}</b></span><button class="btn alt" type="button" id="showRes">Result</button>`;
+  f.replaceWith(bar);
+  $("showRes").onclick = () => { $("veil").hidden = false; loadWall(S.win && S.best ? S.best.text : null); };
+}
+setInterval(() => document.querySelectorAll("#cd,.cd2").forEach(el => el.textContent = untilTomorrow()), 30000);
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* confetti */
+function confetti() {
+  const c = $("confetti"); c.hidden = false; const x = c.getContext("2d");
+  c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio; x.scale(devicePixelRatio, devicePixelRatio);
+  const cols = ["#FFD233", "#34D399", "#FF5A5F", "#2F47E8", "#FFFFFF"];
+  const P = Array.from({ length: 140 }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 80, y: innerHeight * .45, vx: (Math.random() - .5) * 14, vy: -Math.random() * 16 - 6, r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+  let t = 0;
+  (function f() {
+    x.clearRect(0, 0, innerWidth, innerHeight);
+    P.forEach(p => { p.vy += .45; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va; x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.c; x.strokeStyle = "#141414"; x.lineWidth = 1.5; x.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); x.strokeRect(-p.r, -p.r / 2, p.r * 2, p.r); x.restore(); });
+    if (++t < 200) requestAnimationFrame(f); else c.hidden = true;
+  })();
+}
+
+/* start */
+const saved = load();
+if (saved) {
+  Object.assign(S, saved);
+  setMeter(S.meter); pips();
+  const lastYou = [...S.history].reverse().find(h => h.role === "you");
+  const lastFrank = [...S.history].reverse().find(h => h.role === "frank");
+  if (lastYou) { $("mine").hidden = false; $("mine").textContent = lastYou.text; }
+  face(S.done ? (S.win ? "defeated" : "stern") : moodFor(S.meter));
+  $("say").textContent = S.done ? (S.win ? "Fine. $1,450 it stays. Don't push your luck." : "Rent's $1,670 on the first. Nice try, though.") : (lastFrank ? lastFrank.text : OPEN);
+  if (S.done) setTimeout(() => end(S.win, true), 500);
+} else {
+  face("stern"); setMeter(0); pips();
+  setTimeout(() => say(OPEN), 350);
+}
+</script>
+
+</body></html>
