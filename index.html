@@ -182,6 +182,12 @@ textarea::placeholder{color:#8A8FA3}
 .wall li{background:var(--soft);border:2px solid var(--ink);border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.4;font-weight:600}
 .wall li.me{background:var(--sun)}
 .wall li small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.left{margin-top:10px;display:inline-block;background:var(--sun);border:2.5px solid var(--ink);border-radius:999px;padding:5px 14px;font-weight:700;font-size:15px}
+.left.none{background:#fff}
+.card-prev{margin-top:18px;border:2.5px solid var(--ink);border-radius:16px;overflow:hidden;background:var(--soft);min-height:120px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted)}
+.card-prev img{display:block;width:100%;height:auto}
+.dbb{display:flex;gap:8px;flex-shrink:0}
+.dbb .btn{padding:9px 14px;font-size:16px}
 .next{margin-top:16px;text-align:center;font-weight:700;font-size:15px}
 .next b{font-family:var(--disp);font-weight:800;font-variant-numeric:tabular-nums}
 .x{position:absolute;right:12px;top:12px;width:38px;height:38px;border:2.5px solid var(--ink);border-radius:50%;background:#fff;font-weight:800;font-size:18px;line-height:1}
@@ -487,19 +493,126 @@ $("form").addEventListener("submit", async e => {
 });
 
 
+
+/* ---------------- result card image ---------------- */
+let CARD = null;
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(/\s+/), lines = []; let cur = "";
+  words.forEach(w => { const t = cur ? cur + " " + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
+  if (cur) lines.push(cur); return lines;
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function faceImage() {
+  return new Promise(res => {
+    const live = $("frank"), src = live.cloneNode(true);
+    const L = live.querySelectorAll("*"), C = src.querySelectorAll("*");
+    L.forEach((el, i) => { const st = getComputedStyle(el); if (C[i]) { C[i].style.opacity = st.opacity; if (st.display === "none" || st.visibility === "hidden") C[i].style.display = "none"; } });
+    src.setAttribute("xmlns", "http://www.w3.org/2000/svg"); src.setAttribute("width", "520"); src.setAttribute("height", "500"); src.removeAttribute("class");
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(src));
+    const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url;
+  });
+}
+async function makeCard(win) {
+  try { await Promise.all(['800 60px "Bricolage Grotesque"', '600 30px "Instrument Sans"', '700 30px "Instrument Sans"'].map(f => document.fonts.load(f))); } catch (e) {}
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"), cs = getComputedStyle(document.documentElement);
+  const bg = cs.getPropertyValue("--bg").trim() || "#2F47E8", w1 = cs.getPropertyValue("--wall").trim() || "#3953F2", ink = "#141414";
+  const D = '"Bricolage Grotesque","Arial Black",sans-serif', B = '"Instrument Sans",Arial,sans-serif';
+  // background stripes
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.fillStyle = w1; for (let i = 0; i < W; i += 120) x.fillRect(i, 0, 60, H);
+  // header
+  x.textBaseline = "alphabetic"; x.fillStyle = "#fff"; x.font = `800 64px ${D}`;
+  x.lineWidth = 8; x.strokeStyle = ink; x.lineJoin = "round"; x.strokeText("Talk Me Into It", 70, 118); x.fillText("Talk Me Into It", 70, 118);
+  x.font = `700 30px ${B}`; x.fillStyle = "rgba(255,255,255,.9)"; x.fillText(`DAY ${CH.dayNumber} · ${String(CH.title).toUpperCase()}`, 72, 166);
+  // the card
+  const cx = 60, cy = 210, cw = W - 120, ch = 1000;
+  x.fillStyle = ink; rr(x, cx + 12, cy + 12, cw, ch, 44); x.fill();
+  x.fillStyle = "#fff"; rr(x, cx, cy, cw, ch, 44); x.fill(); x.lineWidth = 6; x.strokeStyle = ink; x.stroke();
+  // character in a round window
+  const face = await faceImage();
+  x.save(); rr(x, cx + cw - 330, cy + 40, 280, 280, 140); x.fillStyle = bg; x.fill(); x.clip();
+  if (face) x.drawImage(face, cx + cw - 330 - 20, cy + 60, 320, 308);
+  x.restore(); rr(x, cx + cw - 330, cy + 40, 280, 280, 140); x.lineWidth = 6; x.strokeStyle = ink; x.stroke();
+  // stamp
+  const stamp = win ? CH.stamps.win : CH.stamps.lose, sc = win ? "#10A36B" : "#FF5A5F";
+  x.save(); x.translate(cx + 60, cy + 150); x.rotate(-0.1); x.font = `800 52px ${D}`;
+  const sw = Math.min(x.measureText(stamp).width, 520); x.lineWidth = 7; x.strokeStyle = sc; rr(x, -10, -62, sw + 44, 86, 14); x.stroke();
+  x.fillStyle = sc; x.fillText(stamp, 12, 0, 520); x.restore();
+  // headline
+  x.fillStyle = ink; x.font = `800 58px ${D}`;
+  let y = cy + 290; wrapLines(x, fill(win ? CH.headline.win : CH.headline.lose, S.used, S.meter), cw - 440).slice(0, 3).forEach(l => { x.fillText(l, cx + 50, y); y += 64; });
+  // meter
+  y = Math.max(y + 30, cy + 400);
+  x.font = `700 28px ${B}`; x.fillStyle = "#5A5F73"; x.fillText("DEAL METER", cx + 50, y);
+  x.textAlign = "right"; x.fillStyle = ink; x.font = `800 34px ${D}`; x.fillText(S.meter + "%", cx + cw - 50, y + 2); x.textAlign = "left";
+  y += 22; const mw = cw - 100;
+  rr(x, cx + 50, y, mw, 56, 28); x.fillStyle = "#F1F3FF"; x.fill();
+  if (S.meter > 0) { x.save(); rr(x, cx + 50, y, mw, 56, 28); x.clip(); x.fillStyle = S.meter >= 100 ? "#34D399" : "#FFD233"; x.fillRect(cx + 50, y, mw * S.meter / 100, 56); x.restore(); }
+  rr(x, cx + 50, y, mw, 56, 28); x.lineWidth = 5; x.strokeStyle = ink; x.stroke();
+  y += 110;
+  // the line
+  const line = S.best ? S.best.text : "";
+  if (line) {
+    x.font = `700 26px ${B}`; x.fillStyle = "#5A5F73"; x.fillText(win ? "THE LINE THAT WORKED" : "MY BEST LINE", cx + 50, y);
+    x.font = `600 38px ${B}`; const ls = wrapLines(x, "“" + line + "”", mw - 60); const shown = ls.slice(0, 6);
+    if (ls.length > 6) shown[5] = shown[5].replace(/\s*\S*$/, "") + "...";
+    const bh = shown.length * 50 + 50; y += 20;
+    rr(x, cx + 50, y, mw, bh, 22); x.fillStyle = "#F1F3FF"; x.fill(); x.lineWidth = 4; x.strokeStyle = ink; x.stroke();
+    x.fillStyle = ink; let ty = y + 60; shown.forEach(l => { x.fillText(l, cx + 80, ty); ty += 50; }); y += bh + 50;
+  }
+  x.font = `700 30px ${B}`; x.fillStyle = ink;
+  x.fillText(`${S.used} message${S.used > 1 ? "s" : ""}  ·  ${S.found.length} of ${S.total} weak spots found`, cx + 50, cy + ch - 55);
+  // footer
+  x.fillStyle = "#fff"; x.font = `800 40px ${D}`; x.lineWidth = 6; x.strokeStyle = ink;
+  x.strokeText("#TalkMeIntoIt", 70, H - 60); x.fillText("#TalkMeIntoIt", 70, H - 60);
+  x.textAlign = "right"; x.font = `700 28px ${B}`; x.fillText(CONFIG.site, W - 70, H - 64); x.textAlign = "left";
+  return await new Promise(r => c.toBlob(b => r(b), "image/png"));
+}
+async function wireShare(win, shareText) {
+  const fname = `talk-me-into-it-day-${CH.dayNumber}.png`;
+  const post = () => window.open("https://x.com/intent/post?text=" + encodeURIComponent(shareText), "_blank", "noopener");
+  const save = () => { if (!CARD) return; const a = document.createElement("a"); a.href = URL.createObjectURL(CARD); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
+  $("saveImg").onclick = () => { save(); track("save-image"); };
+  $("postx").onclick = () => track("post-x");
+  $("shareImg").onclick = async () => {
+    track("share-image");
+    const file = CARD ? new File([CARD], fname, { type: "image/png" }) : null;
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], text: shareText }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    // no share sheet here (most computers): save the picture, then open X with the text ready
+    save(); $("note").textContent = ""; post();
+    $("shareImg").textContent = "Image saved. Add it to your post";
+  };
+  CARD = null;
+  try { CARD = await makeCard(win); } catch (e) { CARD = null; }
+  const prev = $("cardPrev");
+  if (prev) prev.innerHTML = CARD ? `<img alt="Your result card" src="${URL.createObjectURL(CARD)}">` : "<span>Couldn't make the image. Post on X still works.</span>";
+}
+const ROUNDS = 3;                                   // rounds per person per day (first go plus 2 retries)
+function roundNow() { try { return Math.max(1, +localStorage.getItem("tm-tries-" + today()) || 1); } catch (e) { return 1; } }
+function triesLeft() { return Math.max(0, ROUNDS - roundNow()); }
+function retry() {
+  if (triesLeft() <= 0) return;
+  try { localStorage.removeItem(KEY); localStorage.setItem("tm-tries-" + today(), String(roundNow() + 1)); } catch (e) {}
+  track("retry");
+  location.reload();
+}
+
 /* ---------------- end ---------------- */
 function end(win, restored) {
   const n = S.used;
   const line = S.best ? S.best.text : null;
   const hidden = Math.max(0, S.total - S.found.length);
   if (!restored) track(win ? "won" : "lost");
-  const shareText = win
-    ? `Talk Me Into It, Day ${CH.dayNumber}\n${fill(CH.share.win, n, S.meter)}\n\nMy winning line: "${(line || "").slice(0, 140)}"\n\nBeat ${CH.them}: ${CONFIG.site}`
-    : `Talk Me Into It, Day ${CH.dayNumber}\n${fill(CH.share.lose, n, S.meter)}\n\nTry ${CH.them}: ${CONFIG.site}`;
+  const tag = "#TalkMeIntoIt";
+  const shareText = `${fill(win ? CH.share.win : CH.share.lose, n, S.meter)}\n\nTalk Me Into It, Day ${CH.dayNumber}. Your turn: ${CONFIG.site}\n${tag}`;
   $("sheet").innerHTML = `
     <button class="x" id="closeSheet" type="button" aria-label="Close">×</button>
     <span class="stamp ${win ? "win" : "lose"}">${esc(win ? CH.stamps.win : CH.stamps.lose)}</span>
     <h2>${esc(fill(win ? CH.headline.win : CH.headline.lose, n, S.meter))}</h2>
+    <p class="left ${triesLeft() ? "" : "none"}">${triesLeft() ? `You have ${triesLeft()} ${triesLeft() === 1 ? "retry" : "retries"} left today.` : `No retries left today. A new character comes in ${untilTomorrow()}.`}</p>
     ${line ? `<div class="quote"><small>${win ? "The line that worked" : "Your best line"}</small>${esc(line)}</div>` : ""}
     <div class="found"><p>You found ${S.found.length} of ${S.total} weak spots.</p>
       <div class="chips">${S.found.map(id => `<span class="chip">${esc(S.labels[id] || "")}</span>`).join("")}${Array.from({ length: hidden }, () => '<span class="chip hid">Hidden</span>').join("")}</div></div>
@@ -507,13 +620,17 @@ function end(win, restored) {
     <p class="rh">How people beat ${esc(CH.name)} today</p>
     <p class="wstat" id="wstat">Loading...</p>
     <ol class="wall" id="wall"></ol>
+    <div class="card-prev" id="cardPrev"><span>Making your result card...</span></div>
     <div class="actions">
-      <a class="btn wide" href="https://x.com/intent/post?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener" id="postx">Post on X</a>
-      <button class="btn alt wide" id="copy" type="button">Copy result</button>
+      <button class="btn wide" id="shareImg" type="button">Share my result</button>
+      <button class="btn alt" id="saveImg" type="button">Save image</button>
+      <a class="btn alt" href="https://x.com/intent/post?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener" id="postx">Post on X</a>
+      ${triesLeft() > 0 ? `<button class="btn alt wide" id="retry" type="button">Retry (${triesLeft()} ${triesLeft() === 1 ? "retry" : "retries"} left)</button>` : ""}
     </div>
-    <p class="next">New round in <b id="cd">${untilTomorrow()}</b></p>`;
+    <p class="next">New character in <b id="cd">${untilTomorrow()}</b></p>`;
   $("veil").hidden = false;
-  $("copy").onclick = async () => { try { await navigator.clipboard.writeText(shareText); $("copy").textContent = "Copied"; track("copy"); } catch (e) { $("copy").textContent = "Copy failed"; } };
+  wireShare(win, shareText);
+  if ($("retry")) $("retry").onclick = retry;
   $("closeSheet").onclick = () => { $("veil").hidden = true; };
   doneBar(win);
   loadWall(win ? line : null);
@@ -539,9 +656,10 @@ async function loadWall(mine) {
 function doneBar(win) {
   const f = $("form"); if (!f) return;
   const bar = document.createElement("div"); bar.className = "donebar";
-  bar.innerHTML = `<span>${win ? `You beat ${CH.name} today.` : `${CH.name} won today.`} New round in <b class="cd2">${untilTomorrow()}</b></span><button class="btn alt" type="button" id="showRes">Result</button>`;
+  bar.innerHTML = `<span>${win ? `You beat ${CH.name}.` : `${CH.name} won this one.`} New character in <b class="cd2">${untilTomorrow()}</b></span><span class="dbb">${triesLeft() > 0 ? `<button class="btn alt" type="button" id="retry2">Retry (${triesLeft()})</button>` : ""}<button class="btn" type="button" id="showRes">Result</button></span>`;
   f.replaceWith(bar);
   $("showRes").onclick = () => { $("veil").hidden = false; loadWall(S.win && S.best ? S.best.text : null); };
+  if ($("retry2")) $("retry2").onclick = retry;
 }
 setInterval(() => document.querySelectorAll("#cd,.cd2").forEach(el => el.textContent = untilTomorrow()), 30000);
 function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
