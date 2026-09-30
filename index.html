@@ -311,7 +311,7 @@ function setupCharacter(c) {
   r.setProperty("--bg", sc.bg || "#2F47E8"); r.setProperty("--wall", (sc.wall || [])[0] || "#3953F2");
   r.setProperty("--wall2", (sc.wall || [])[1] || "#2A40D6"); r.setProperty("--floor", sc.floor || "#1E2FA8");
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", sc.bg || "#2F47E8");
-  $("dayline").textContent = `Day ${c.dayNumber} · ${c.title}`;
+  $("dayline").textContent = `${weekday()} · ${c.title}`;
   $("goal").innerHTML = c.goal; $("hint").textContent = c.hint;
   $("who").textContent = `${c.name} · ${c.role}`;
   const parts = sceneHTML(sc); $("scene").innerHTML = parts.back; $("front").innerHTML = parts.front;
@@ -335,6 +335,7 @@ const CONFIG = {
 const S = { meter: 0, used: 0, found: [], labels: {}, total: 8, history: [], turns: [], token: null, best: null, done: false, busy: false, win: false };
 
 /* one game per person per day, saved in the browser so a refresh doesn't restart it */
+function weekday() { return new Date().toLocaleDateString("en-US", { weekday: "long" }); }
 function today() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 const KEY = "tm-day-" + today();
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ meter: S.meter, used: S.used, found: S.found, labels: S.labels, total: S.total, history: S.history, best: S.best, done: S.done, win: S.win, turns: S.turns, token: S.token })); } catch (e) {} }
@@ -524,7 +525,7 @@ async function makeCard(win) {
   // header
   x.textBaseline = "alphabetic"; x.fillStyle = "#fff"; x.font = `800 64px ${D}`;
   x.lineWidth = 8; x.strokeStyle = ink; x.lineJoin = "round"; x.strokeText("Talk Me Into It", 70, 118); x.fillText("Talk Me Into It", 70, 118);
-  x.font = `700 30px ${B}`; x.fillStyle = "rgba(255,255,255,.9)"; x.fillText(`DAY ${CH.dayNumber} · ${String(CH.title).toUpperCase()}`, 72, 166);
+  x.font = `700 30px ${B}`; x.fillStyle = "rgba(255,255,255,.9)"; x.fillText(`${weekday().toUpperCase()} · ${String(CH.title).toUpperCase()}`, 72, 166);
   // the card
   const cx = 60, cy = 210, cw = W - 120, ch = 1000;
   x.fillStyle = ink; rr(x, cx + 12, cy + 12, cw, ch, 44); x.fill();
@@ -570,7 +571,7 @@ async function makeCard(win) {
   return await new Promise(r => c.toBlob(b => r(b), "image/png"));
 }
 async function wireShare(win, shareText) {
-  const fname = `talk-me-into-it-day-${CH.dayNumber}.png`;
+  const fname = `talk-me-into-it-${String(CH.name).toLowerCase()}.png`;
   const post = () => window.open("https://x.com/intent/post?text=" + encodeURIComponent(shareText), "_blank", "noopener");
   const save = () => { if (!CARD) return; const a = document.createElement("a"); a.href = URL.createObjectURL(CARD); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
   $("saveImg").onclick = () => { save(); track("save-image"); };
@@ -607,7 +608,7 @@ function end(win, restored) {
   const hidden = Math.max(0, S.total - S.found.length);
   if (!restored) track(win ? "won" : "lost");
   const tag = "#TalkMeIntoIt";
-  const shareText = `${fill(win ? CH.share.win : CH.share.lose, n, S.meter)}\n\nTalk Me Into It, Day ${CH.dayNumber}. Your turn: ${CONFIG.site}\n${tag}`;
+  const shareText = `${fill(win ? CH.share.win : CH.share.lose, n, S.meter)}\n\nToday on Talk Me Into It it's ${CH.name}. Your turn: ${CONFIG.site}\n${tag}`;
   $("sheet").innerHTML = `
     <button class="x" id="closeSheet" type="button" aria-label="Close">×</button>
     <span class="stamp ${win ? "win" : "lose"}">${esc(win ? CH.stamps.win : CH.stamps.lose)}</span>
