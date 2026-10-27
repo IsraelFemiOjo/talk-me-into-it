@@ -404,7 +404,7 @@ async function judge(text) {
 
 /* play counting */
 (function () {
-  if (!CONFIG.goatcounter || /^(localhost|127\.)/.test(location.hostname) || location.protocol === "file:") return;
+  if (!CONFIG.goatcounter || /^(localhost|127\.)/.test(location.hostname) || location.protocol === "file:" || /\/staging\//.test(location.pathname)) return;   // test copies never count
   const sc = document.createElement("script"); sc.async = true; sc.src = "https://gc.zgo.at/count.js";
   sc.setAttribute("data-goatcounter", "https://" + CONFIG.goatcounter + ".goatcounter.com/count");
   sc.setAttribute("data-goatcounter-settings", '{"path":"talk-me-into-it"}');
